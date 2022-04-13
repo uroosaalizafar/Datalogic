@@ -348,5 +348,67 @@ public class BarcodeActivity extends AppCompatActivity implements View.OnClickLi
     public void onClick(View v) {
 
     }
+    
+      @Override
+    protected void onResume() {
+        super.onResume();
+
+        Log.i(LOGTAG, "onResume");
+
+        // If the decoder instance is null, create it.
+        if (decoder == null) {
+            // Remember an onPause call will set it to null.
+            Log.i("Decodeer", "onResume");
+            decoder = new BarcodeManager();
+        }
+
+        // From here on, we want to be notified with exceptions in case of errors.
+        ErrorManager.enableExceptions(true);
+
+        try {
+
+            // Create an anonymous class.
+            listener = new ReadListener() {
+
+
+                // Implement the callback method.
+                @Override
+                public void onRead(DecodeResult decodeResult) {
+                    Log.i("Decode Result", decodeResult.getText());
+                    // Change the displayed text to the current received result.
+                    roll_et.setText(decodeResult.getText());
+//                    GET(decodeResult.getText());
+                    postDataUsingVolley(decodeResult.getText(), pallet_et.getText().toString().trim(), "", androidID);
+                }
+
+            };
+
+            // Remember to add it, as a listener.
+            decoder.addReadListener(listener);
+
+        } catch (DecodeException e) {
+            Log.e(LOGTAG, "Error while trying to bind a listener to BarcodeManager", e);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        Log.i(LOGTAG, "onPause");
+
+        // If we have an instance of BarcodeManager.
+        if (decoder != null) {
+            try {
+                // Unregister our listener from it and free resources.
+                decoder.removeReadListener(listener);
+
+                // Let the garbage collector take care of our reference.
+                decoder = null;
+            } catch (Exception e) {
+                Log.e(LOGTAG, "Error while trying to remove a listener from BarcodeManager", e);
+            }
+        }
+    }
 
 }
